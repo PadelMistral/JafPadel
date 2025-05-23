@@ -1,0 +1,285 @@
+/* estilo.css - Versión 3.0 - Diseño Universal y Responsive */
+:root {
+  /* Paleta de Colores Moderna */
+  --primary: #2A9D8F;       /* Verde Principal */
+  --secondary: #264653;     /* Azul Oscuro */
+  --accent: #E76F51;        /* Coral */
+  --background: #F8F9FA;    /* Fondo claro */
+  --text: #2B2D42;          /* Texto oscuro */
+  --card-bg: #FFFFFF;       /* Fondo tarjetas */
+  --border: #E0E0E0;        /* Bordes */
+  
+  /* Sombras y Efectos */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset Moderno */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header y Navegación */
+.encabezado {
+  background: var(--secondary);
+  padding: 1rem;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.titulo {
+  color: white;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.menu-hamburguesa {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.linea-hamburguesa {
+  height: 2px;
+  width: 100%;
+  background: white;
+  transition: var(--transition);
+}
+
+/* Contenido Principal */
+.contenido-principal, .contenedor-principal {
+  flex: 1;
+  padding: 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Sistema de Tarjetas */
+.tarjeta {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid var(--border);
+}
+
+.tarjeta:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Formularios Universales */
+.formulario-login, .form-equipo, .form-jornada {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.input-texto, select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.input-texto:focus, select:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* Tablas Modernas */
+.tabla-clasificacion {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tabla-clasificacion th {
+  background: var(--secondary);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+}
+
+.tabla-clasificacion td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Listas Administrativas */
+.lista-usuarios, .lista-equipos {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.lista-usuarios li, .lista-equipos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Botones y Acciones */
+.boton-accion {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.boton-accion:hover {
+  background: #228075;
+  transform: translateY(-2px);
+}
+
+/* Sistema Responsive */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .contenido-principal {
+    padding: 1rem;
+  }
+  
+  .tarjeta {
+    padding: 1rem;
+  }
+  
+  .form-jornada {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .encabezado {
+    padding: 0.5rem;
+  }
+  
+  .titulo {
+    font-size: 1.2rem;
+  }
+  
+  .lista-usuarios li, .lista-equipos li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Animaciones Clave */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Componentes Específicos */
+/* Chat */
+.chat-container {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-mensajes {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.mensaje {
+  max-width: 80%;
+  padding: 0.8rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  animation: slideIn 0.3s ease;
+}
+
+/* Perfil de Usuario */
+#estadisticas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+#crear-partido {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Normas del Torneo */
+.normas-torneo h2 {
+  color: var(--secondary);
+  margin: 1.5rem 0 1rem;
+}
+
+.normas-torneo ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Login/Registro */
+.contenedor-login {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  width: 90%;
+  max-width: 400px;
+  animation: fadeIn 0.5s ease;
+}
