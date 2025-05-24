@@ -17,6 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
 
+// Elementos del DOM
 const selectJugador1 = document.getElementById("select-jugador1");
 const selectJugador2 = document.getElementById("select-jugador2");
 const btnCrearEquipo = document.getElementById("btn-crear-equipo");
@@ -24,13 +25,7 @@ const listaEquipos = document.getElementById("lista-equipos-admin");
 const listaUsuarios = document.getElementById("lista-usuarios");
 const btnCrearJornada = document.getElementById("btn-crear-jornada");
 const btnAnadirPartido = document.getElementById("btn-anadir-partido");
-const btnVolver = document.getElementById("btn-volver") || (() => {
-  const btn = document.createElement("button");
-  btn.id = "btn-volver";
-  btn.textContent = "Volver";
-  document.body.insertBefore(btn, document.body.firstChild);
-  return btn;
-})();
+const btnVolver = document.getElementById("btn-volver");
 const partidosJornada = document.getElementById("partidos-jornada");
 const nombreJornada = document.getElementById("nombre-jornada");
 const partidosJugadosDiv = document.getElementById("partidos-jugados");
@@ -42,17 +37,21 @@ const partidosPendientesDiv = document.getElementById("partidos-pendientes") || 
   return div;
 })();
 
+// Variables globales
 let usuariosMap = {};
 let equiposMap = {};
 let partidosPorJornada = [];
 
+// ==================== FUNCIONES PRINCIPALES ====================
+
+// Cargar usuarios en selects
 async function cargarUsuarios() {
   const q = query(collection(db, "usuarios"), where("aprobado", "==", true));
   const usuariosSnap = await getDocs(q);
 
   usuariosMap = {};
-  selectJugador1.innerHTML = '';
-  selectJugador2.innerHTML = '';
+  selectJugador1.innerHTML = '<option value="">Seleccionar jugador</option>';
+  selectJugador2.innerHTML = '<option value="">Seleccionar jugador</option>';
 
   usuariosSnap.forEach(docu => {
     const data = docu.data();
@@ -67,6 +66,7 @@ async function cargarUsuarios() {
   });
 }
 
+// Escuchar cambios en usuarios
 function escucharUsuarios() {
   onSnapshot(collection(db, "usuarios"), (snapshot) => {
     listaUsuarios.innerHTML = "";
@@ -75,21 +75,24 @@ function escucharUsuarios() {
       const usuario = docu.data();
       const li = document.createElement("li");
       li.innerHTML = `
-        <div>
+        <div class="usuario-item">
           <span>${usuario.nombreUsuario} (${usuario.email})</span>
+          <input type="text" class="edit-nombre" value="${usuario.nombreUsuario}" style="display: none;">
           <button class="${usuario.aprobado ? 'rechazar' : 'aprobar'}" 
                   data-id="${docu.id}" 
                   data-estado="${usuario.aprobado}">
             ${usuario.aprobado ? 'Rechazar' : 'Aprobar'}
           </button>
+          <button class="editar-nombre-btn" data-id="${docu.id}">Editar Nombre</button>
+          <button class="guardar-nombre-btn" data-id="${docu.id}" style="display: none;">Guardar</button>
           <button class="eliminar-usuario" data-id="${docu.id}">Eliminar</button>
         </div>
       `;
       listaUsuarios.appendChild(li);
     });
 
-    // Botones aprobar/rechazar
-    document.querySelectorAll('#lista-usuarios button.aprobar, #lista-usuarios button.rechazar').forEach(btn => {
+    // Eventos para aprobar/rechazar
+    document.querySelectorAll('.aprobar, .rechazar').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const userId = e.target.dataset.id;
         const nuevoEstado = e.target.dataset.estado === "true" ? false : true;
@@ -97,19 +100,47 @@ function escucharUsuarios() {
       });
     });
 
-    // Botones eliminar
-    document.querySelectorAll('#lista-usuarios button.eliminar-usuario').forEach(btn => {
+    // Eventos para editar nombres
+    document.querySelectorAll('.editar-nombre-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const container = e.target.closest('.usuario-item');
+        container.querySelector('span').style.display = 'none';
+        container.querySelector('.edit-nombre').style.display = 'inline-block';
+        container.querySelector('.editar-nombre-btn').style.display = 'none';
+        container.querySelector('.guardar-nombre-btn').style.display = 'inline-block';
+      });
+    });
+
+    document.querySelectorAll('.guardar-nombre-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const userId = e.target.dataset.id;
-        if (confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) {
-          await deleteDoc(doc(db, "usuarios", userId));
-          alert("Usuario eliminado correctamente");
+        const container = e.target.closest('.usuario-item');
+        const nuevoNombre = container.querySelector('.edit-nombre').value;
+        
+        await updateDoc(doc(db, "usuarios", userId), { 
+          nombreUsuario: nuevoNombre 
+        });
+        
+        container.querySelector('span').textContent = `${nuevoNombre} (${container.querySelector('span').textContent.split('(')[1]}`;
+        container.querySelector('span').style.display = 'inline-block';
+        container.querySelector('.edit-nombre').style.display = 'none';
+        container.querySelector('.editar-nombre-btn').style.display = 'inline-block';
+        e.target.style.display = 'none';
+      });
+    });
+
+    // Eventos para eliminar
+    document.querySelectorAll('.eliminar-usuario').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        if (confirm("¿Eliminar este usuario permanentemente?")) {
+          await deleteDoc(doc(db, "usuarios", e.target.dataset.id));
         }
       });
     });
   });
 }
 
+// Escuchar equipos
 function escucharEquipos() {
   onSnapshot(collection(db, "equipos"), (snapshot) => {
     listaEquipos.innerHTML = "";
@@ -127,10 +158,11 @@ function escucharEquipos() {
       listaEquipos.appendChild(li);
     });
 
+    // Eventos para eliminar equipos
     document.querySelectorAll('.eliminar-equipo').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const equipoId = e.target.dataset.id;
-        if (confirm("¿Eliminar este equipo?")) {
+        if (confirm("¿Eliminar este equipo y todos sus partidos?")) {
           await deleteDoc(doc(db, "equipos", equipoId));
         }
       });
@@ -138,6 +170,7 @@ function escucharEquipos() {
   });
 }
 
+// Crear equipo
 btnCrearEquipo.addEventListener("click", async () => {
   const jugador1Id = selectJugador1.value;
   const jugador2Id = selectJugador2.value;
@@ -152,10 +185,7 @@ btnCrearEquipo.addEventListener("click", async () => {
     return;
   }
 
-  // Consultar todos los equipos
   const equiposSnap = await getDocs(collection(db, "equipos"));
-
-  // Verificar si alguno de los jugadores ya pertenece a un equipo
   let jugador1EnEquipo = false;
   let jugador2EnEquipo = false;
 
@@ -166,13 +196,11 @@ btnCrearEquipo.addEventListener("click", async () => {
   });
 
   if (jugador1EnEquipo || jugador2EnEquipo) {
-    alert("Uno o ambos jugadores ya pertenecen a un equipo y no pueden estar en otro.");
+    alert("Uno o ambos jugadores ya pertenecen a un equipo.");
     return;
   }
 
-  // Crear el equipo si pasa las validaciones
   const nombreEquipo = `${usuariosMap[jugador1Id]} y ${usuariosMap[jugador2Id]}`;
-
   await addDoc(collection(db, "equipos"), {
     nombre: nombreEquipo,
     jugadores: [jugador1Id, jugador2Id],
@@ -184,7 +212,7 @@ btnCrearEquipo.addEventListener("click", async () => {
   selectJugador2.value = "";
 });
 
-
+// Añadir partido a jornada
 btnAnadirPartido.addEventListener("click", () => {
   const contenedorPartido = document.createElement("div");
   contenedorPartido.className = "partido";
@@ -200,27 +228,24 @@ btnAnadirPartido.addEventListener("click", () => {
       const option = document.createElement("option");
       option.value = id;
       option.textContent = nombre;
-      select.appendChild(option.cloneNode(true));
+      select.appendChild(option);
     });
   });
 
   contenedorPartido.appendChild(select1);
   contenedorPartido.appendChild(document.createTextNode(" vs "));
   contenedorPartido.appendChild(select2);
-  contenedorPartido.appendChild(document.createTextNode(" - Fecha y hora: "));
+  contenedorPartido.appendChild(document.createTextNode(" - Fecha: "));
   contenedorPartido.appendChild(inputFecha);
 
   partidosJornada.appendChild(contenedorPartido);
   partidosPorJornada.push(contenedorPartido);
 });
 
-btnVolver.addEventListener("click", () => {
-  window.location.href = "index.html";
-});
-
+// Crear jornada
 btnCrearJornada.addEventListener("click", async () => {
   if (partidosPorJornada.length === 0) {
-    alert("¡Añade al menos un partido!");
+    alert("Añade al menos un partido");
     return;
   }
 
@@ -230,27 +255,24 @@ btnCrearJornada.addEventListener("click", async () => {
     estado: "pendiente"
   });
 
-  const partidosJugadosSnap = await getDocs(collectionGroup(db, "partidos"));
   const partidosExistentes = new Set();
-
-  partidosJugadosSnap.forEach(doc => {
+  const partidosSnap = await getDocs(collectionGroup(db, "partidos"));
+  partidosSnap.forEach(doc => {
     const data = doc.data();
-    const clave = [data.equipoLocal, data.equipoVisitante].sort().join("-");
-    partidosExistentes.add(clave);
+    partidosExistentes.add([data.equipoLocal, data.equipoVisitante].sort().join("-"));
   });
 
   for (const partido of partidosPorJornada) {
     const selects = partido.querySelectorAll("select");
-    const equipo1 = selects[0]?.value;
-    const equipo2 = selects[1]?.value;
-    const fechaInput = partido.querySelector("input[type='datetime-local']").value;
+    const equipo1 = selects[0].value;
+    const equipo2 = selects[1].value;
+    const fechaInput = partido.querySelector("input").value;
 
-    if (!equipo1 || !equipo2) continue;
-    if (equipo1 === equipo2) continue;
+    if (!equipo1 || !equipo2 || equipo1 === equipo2) continue;
 
-    const clave = [equipo1, equipo2].sort().join("-");
-    if (partidosExistentes.has(clave)) {
-      alert("Uno de los partidos ya fue jugado anteriormente");
+    const clavePartido = [equipo1, equipo2].sort().join("-");
+    if (partidosExistentes.has(clavePartido)) {
+      alert(`El partido ${equiposMap[equipo1]} vs ${equiposMap[equipo2]} ya existe`);
       continue;
     }
 
@@ -269,6 +291,7 @@ btnCrearJornada.addEventListener("click", async () => {
   nombreJornada.value = "";
 });
 
+// Cargar partidos jugados
 function cargarPartidosJugados() {
   onSnapshot(collection(db, "calendario"), async (snapshot) => {
     const jugados = [];
@@ -276,12 +299,14 @@ function cargarPartidosJugados() {
 
     for (const jornadaDoc of snapshot.docs) {
       const partidosSnap = await getDocs(collection(db, `calendario/${jornadaDoc.id}/partidos`));
-      for (const partidoDoc of partidosSnap.docs) {
-        const data = partidoDoc.data();
-        const entry = { id: partidoDoc.id, jornadaId: jornadaDoc.id, ...data };
-        if (data.resultado) jugados.push(entry);
-        else pendientes.push(entry);
-      }
+      partidosSnap.forEach(partidoDoc => {
+        const partido = {
+          id: partidoDoc.id,
+          jornadaId: jornadaDoc.id,
+          ...partidoDoc.data()
+        };
+        partido.resultado ? jugados.push(partido) : pendientes.push(partido);
+      });
     }
 
     mostrarPartidosJugados(jugados);
@@ -289,12 +314,13 @@ function cargarPartidosJugados() {
   });
 }
 
+// Mostrar partidos jugados
 async function mostrarPartidosJugados(partidos) {
   partidosJugadosDiv.innerHTML = "";
   const lista = document.createElement("div");
   lista.className = "admin-partidos-lista";
 
-  const partidosCards = await Promise.all(partidos.map(async partido => {
+  for (const partido of partidos) {
     const [localSnap, visitanteSnap] = await Promise.all([
       getDoc(doc(db, "equipos", partido.equipoLocal)),
       getDoc(doc(db, "equipos", partido.equipoVisitante))
@@ -309,25 +335,43 @@ async function mostrarPartidosJugados(partidos) {
     div.dataset.jornadaId = partido.jornadaId;
 
     div.innerHTML = `
-      <h3>${local.nombre} vs ${visitante.nombre}</h3>
+      <div class="partido-header">
+        <h3>${local.nombre} vs ${visitante.nombre}</h3>
+        <div class="partido-actions">
+          <button class="editar-resultado">✏️ Editar</button>
+          <button class="borrar-partido">🗑️ Borrar</button>
+        </div>
+      </div>
       <div class="resultado-display">${formatearResultado(partido.resultado)}</div>
-      <button class="editar-resultado">Editar Resultado</button>
-      <button class="borrar-partido" style="margin-left:10px; color:red;">Borrar Partido</button>
-      <form class="form-editar-resultado" style="display:none; margin-top:10px;">
-        <label>Set 1: <input type="number" name="set1p1" min="0" max="99" value="${partido.resultado.set1?.puntos1 ?? 0}"> -
-                <input type="number" name="set1p2" min="0" max="99" value="${partido.resultado.set1?.puntos2 ?? 0}"></label><br>
-        <label>Set 2: <input type="number" name="set2p1" min="0" max="99" value="${partido.resultado.set2?.puntos1 ?? 0}"> -
-                <input type="number" name="set2p2" min="0" max="99" value="${partido.resultado.set2?.puntos2 ?? 0}"></label><br>
-        <label>Set 3: <input type="number" name="set3p1" min="0" max="99" value="${partido.resultado.set3?.puntos1 ?? 0}"> -
-                <input type="number" name="set3p2" min="0" max="99" value="${partido.resultado.set3?.puntos2 ?? 0}"></label><br>
-        <button type="submit">Guardar</button>
-        <button type="button" class="cancelar-edicion">Cancelar</button>
+      <form class="form-editar-resultado" style="display:none;">
+        <div class="set-edicion">
+          <label>Set 1: 
+            <input type="number" name="set1p1" min="0" value="${partido.resultado.set1?.puntos1 || 0}">
+            - <input type="number" name="set1p2" min="0" value="${partido.resultado.set1?.puntos2 || 0}">
+          </label>
+        </div>
+        <div class="set-edicion">
+          <label>Set 2: 
+            <input type="number" name="set2p1" min="0" value="${partido.resultado.set2?.puntos1 || 0}">
+            - <input type="number" name="set2p2" min="0" value="${partido.resultado.set2?.puntos2 || 0}">
+          </label>
+        </div>
+        <div class="set-edicion">
+          <label>Set 3: 
+            <input type="number" name="set3p1" min="0" value="${partido.resultado.set3?.puntos1 || 0}">
+            - <input type="number" name="set3p2" min="0" value="${partido.resultado.set3?.puntos2 || 0}">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit">💾 Guardar</button>
+          <button type="button" class="cancelar-edicion">❌ Cancelar</button>
+        </div>
       </form>
     `;
-    return div;
-  }));
 
-  partidosCards.forEach(div => lista.appendChild(div));
+    lista.appendChild(div);
+  }
+
   partidosJugadosDiv.appendChild(lista);
 
   // Delegación de eventos
@@ -351,43 +395,34 @@ async function mostrarPartidosJugados(partidos) {
     }
 
     if (e.target.classList.contains("borrar-partido")) {
-      const confirmar = confirm("¿Estás seguro de que quieres borrar este partido?");
-      if (!confirmar) return;
-
-      try {
+      if (confirm("¿Borrar este partido permanentemente?")) {
         await deleteDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`));
-        alert("Partido borrado correctamente.");
         partidoDiv.remove();
-      } catch (error) {
-        alert("Error al borrar el partido: " + error.message);
       }
     }
   });
 
-  // Guardar resultados
-  lista.addEventListener("submit", async (ev) => {
-    if (!ev.target.classList.contains("form-editar-resultado")) return;
+  lista.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!e.target.classList.contains("form-editar-resultado")) return;
 
-    ev.preventDefault();
-
-    const partidoDiv = ev.target.closest(".admin-partido-card");
+    const partidoDiv = e.target.closest(".admin-partido-card");
     const partidoId = partidoDiv.dataset.partidoId;
     const jornadaId = partidoDiv.dataset.jornadaId;
 
-    const formData = new FormData(ev.target);
-
+    const formData = new FormData(e.target);
     const nuevoResultado = {
       set1: {
-        puntos1: Number(formData.get("set1p1")),
-        puntos2: Number(formData.get("set1p2")),
+        puntos1: parseInt(formData.get("set1p1")),
+        puntos2: parseInt(formData.get("set1p2"))
       },
       set2: {
-        puntos1: Number(formData.get("set2p1")),
-        puntos2: Number(formData.get("set2p2")),
+        puntos1: parseInt(formData.get("set2p1")),
+        puntos2: parseInt(formData.get("set2p2"))
       },
       set3: {
-        puntos1: Number(formData.get("set3p1")),
-        puntos2: Number(formData.get("set3p2")),
+        puntos1: parseInt(formData.get("set3p1")),
+        puntos2: parseInt(formData.get("set3p2"))
       }
     };
 
@@ -396,76 +431,99 @@ async function mostrarPartidosJugados(partidos) {
         resultado: nuevoResultado
       });
 
-      alert("Resultado actualizado");
-
-      partidoDiv.querySelector(".resultado-display").textContent = formatearResultado(nuevoResultado);
+      partidoDiv.querySelector(".resultado-display").innerHTML = formatearResultado(nuevoResultado);
+      partidoDiv.querySelector(".form-editar-resultado").style.display = "none";
       partidoDiv.querySelector(".resultado-display").style.display = "block";
-      ev.target.style.display = "none";
       partidoDiv.querySelector(".editar-resultado").style.display = "inline-block";
-
     } catch (error) {
-      alert("Error al guardar el resultado: " + error.message);
+      alert("Error al actualizar: " + error.message);
     }
   });
 }
 
-
-
-function mostrarPartidosPendientes(partidos) {
+// Mostrar partidos pendientes
+async function mostrarPartidosPendientes(partidos) {
   partidosPendientesDiv.innerHTML = "<h3>Partidos Pendientes</h3>";
-  const lista = document.createElement("ul");
+  const lista = document.createElement("div");
+  lista.className = "lista-pendientes";
 
-  partidos.forEach(async partido => {
+  for (const partido of partidos) {
     const [localSnap, visitanteSnap] = await Promise.all([
       getDoc(doc(db, "equipos", partido.equipoLocal)),
       getDoc(doc(db, "equipos", partido.equipoVisitante))
     ]);
+
     const local = localSnap.data();
     const visitante = visitanteSnap.data();
-    const li = document.createElement("li");
-    const fecha = partido.fecha?.toDate?.().toLocaleString("es-ES") || "Sin fecha";
+    const fecha = partido.fecha?.toDate()?.toLocaleString("es-ES") || "Sin fecha";
 
-    li.innerHTML = `
-      ${local.nombre} vs ${visitante.nombre} → ${fecha}
-      <button class="editar-fecha" data-id="${partido.id}" data-jornada="${partido.jornadaId}">Editar</button>
-      <button class="borrar-partido" data-id="${partido.id}" data-jornada="${partido.jornadaId}">Borrar</button>
+    const div = document.createElement("div");
+    div.className = "pendiente-item";
+    div.innerHTML = `
+      <span>${local.nombre} vs ${visitante.nombre} - ${fecha}</span>
+      <div class="pendiente-actions">
+        <button class="editar-fecha" data-id="${partido.id}" data-jornada="${partido.jornadaId}">📅 Editar</button>
+        <button class="borrar-partido" data-id="${partido.id}" data-jornada="${partido.jornadaId}">🗑️ Borrar</button>
+      </div>
     `;
-    lista.appendChild(li);
-  });
+
+    lista.appendChild(div);
+  }
 
   partidosPendientesDiv.appendChild(lista);
 
+  // Eventos para pendientes
   lista.addEventListener("click", async (e) => {
+    if (!e.target.dataset.id) return;
+
     const partidoId = e.target.dataset.id;
     const jornadaId = e.target.dataset.jornada;
 
     if (e.target.classList.contains("borrar-partido")) {
       if (confirm("¿Eliminar este partido pendiente?")) {
         await deleteDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`));
+        e.target.closest(".pendiente-item").remove();
       }
     }
 
     if (e.target.classList.contains("editar-fecha")) {
-      const nuevaFechaStr = prompt("Introduce nueva fecha y hora (YYYY-MM-DDTHH:mm)");
-      if (!nuevaFechaStr) return;
-      const nuevaFecha = new Date(nuevaFechaStr);
-      if (isNaN(nuevaFecha)) return alert("Fecha inválida");
-      await updateDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`), {
-        fecha: Timestamp.fromDate(nuevaFecha)
-      });
-      alert("Fecha actualizada");
+      const nuevaFecha = prompt("Nueva fecha (formato YYYY-MM-DDTHH:MM):");
+      if (!nuevaFecha) return;
+
+      try {
+        await updateDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`), {
+          fecha: Timestamp.fromDate(new Date(nuevaFecha))
+        });
+        alert("Fecha actualizada");
+      } catch (error) {
+        alert("Error al actualizar: " + error.message);
+      }
     }
   });
 }
 
+// Formatear resultado
 function formatearResultado(resultado) {
-  return [1, 2, 3].map(set => `Set ${set}: ${resultado[`set${set}`]?.puntos1}-${resultado[`set${set}`]?.puntos2}`).join(" | ");
+  if (!resultado) return "Sin resultado";
+  return `
+    <div class="marcador-final">
+      ${[1, 2, 3].map(set => 
+        `Set ${set}: ${resultado[`set${set}`]?.puntos1 || 0}-${resultado[`set${set}`]?.puntos2 || 0}`
+      ).join(" | ")}
+    </div>
+  `;
 }
 
+// Botón volver
+btnVolver.addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+// Inicialización
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-    const userData = userDoc.exists() ? userDoc.data() : null;
+    const userData = userDoc.data();
 
     if (userData?.rol === "Admin") {
       cargarUsuarios();
@@ -473,11 +531,10 @@ onAuthStateChanged(auth, async (user) => {
       escucharUsuarios();
       cargarPartidosJugados();
     } else {
-      alert("Acceso restringido. No eres administrador.");
+      alert("Acceso solo para administradores");
       window.location.href = "index.html";
     }
   } else {
     window.location.href = "index.html";
   }
 });
-
