@@ -224,14 +224,11 @@ btnCrearJornada.addEventListener("click", async () => {
     return;
   }
 
-  const jornadaRef = await addDoc(collection(db, `calendario/${jornadaRef.id}/partidos`), {
-  equipoLocal: equipo1, // ✅ Debe ser ID string
-  equipoVisitante: equipo2, // ✅ Debe ser ID string
-  nombre: nombreJornada.value || "Jornada sin nombre",
-  resultado: null,
-  fecha: Timestamp.fromDate(new Date(fechaInput)),
-  estado: "pendiente"
-});
+  const jornadaRef = await addDoc(collection(db, "calendario"), {
+    nombre: nombreJornada.value,
+    fecha: serverTimestamp(),
+    estado: "pendiente"
+  });
 
   const partidosJugadosSnap = await getDocs(collectionGroup(db, "partidos"));
   const partidosExistentes = new Set();
@@ -483,3 +480,4 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "index.html";
   }
 });
+
