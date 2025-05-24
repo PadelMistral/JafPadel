@@ -894,7 +894,7 @@ body {
 
 /* Navegación tipo Mobile-First */
 .menu-navegacion {
-  width: 100vw;
+  width: 60vw;
   padding-top: 4rem;
   
 }
@@ -922,18 +922,7 @@ body {
   box-shadow: 0 25px 40px rgba(0,0,0,0.2);
 }
 
-/* Tablas Responsive */
-@media (max-width: 768px) {
-  .tabla-clasificacion {
-    overflow-x: auto;
-    display: block;
-  
-  }
-  
-  .tabla-clasificacion table {
-    min-width: 600px;
-  }
-}
+
 
 /* Formularios tipo App Moderna */
 .input-group {
