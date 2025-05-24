@@ -1,136 +1,111 @@
+// calendario.js (corregido)
 import { auth, db } from './firebase-config.js';
-import { 
-  collection, onSnapshot, doc, getDoc, updateDoc, getDocs, 
-  Timestamp, deleteDoc, writeBatch
+import {
+  collection, query, onSnapshot, doc, getDoc, updateDoc, getDocs, Timestamp
 } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
 
 const listaJornadas = document.getElementById("lista-jornadas");
 let usuarioActual = null;
 
-// Función principal para cargar el calendario
 function cargarCalendario() {
   onSnapshot(collection(db, "calendario"), async (snapshot) => {
     listaJornadas.innerHTML = "";
-    
-    try {
-      const jornadasPromesas = snapshot.docs.map(async (jornadaDoc) => {
-        const partidosRef = collection(db, `calendario/${jornadaDoc.id}/partidos`);
-        const partidosSnap = await getDocs(partidosRef);
 
-        // Eliminar jornadas vacías
-        if (partidosSnap.empty) {
-          await deleteDoc(doc(db, "calendario", jornadaDoc.id));
-          return null;
-        }
+    import { deleteDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
-        // Procesar partidos
-        const partidosRenderizados = await Promise.all(
-          partidosSnap.docs.map(async (partidoDoc) => {
-            const partidoData = partidoDoc.data();
-            
-            // Obtener datos completos de los equipos desde Firestore
-            const [equipoLocalSnap, equipoVisitanteSnap] = await Promise.all([
-              getDoc(doc(db, "equipos", partidoData.equipoLocal)),
-              getDoc(doc(db, "equipos", partidoData.equipoVisitante))
-            ]);
+// Dentro de cargarCalendario():
+const jornadas = await Promise.all(snapshot.docs.map(async (jornadaDoc) => {
+  const jornadaData = jornadaDoc.data();
+  const partidosRef = collection(db, `calendario/${jornadaDoc.id}/partidos`);
+  const partidosSnap = await getDocs(partidosRef);
 
-            return crearElementoPartido({
-              ...partidoData,
-              id: partidoDoc.id,
-              equipoLocal: { 
-                id: equipoLocalSnap.id, 
-                ...equipoLocalSnap.data() 
-              },
-              equipoVisitante: { 
-                id: equipoVisitanteSnap.id, 
-                ...equipoVisitanteSnap.data() 
-              }
-            }, jornadaDoc.id);
-          })
-        );
+  // 🔥 Si no hay partidos, eliminar la jornada del Firestore y no renderizar nada
+  if (partidosSnap.empty) {
+    await deleteDoc(doc(db, "calendario", jornadaDoc.id));
+    return null;
+  }
 
-        // Crear elemento de la jornada
-        const divJornada = document.createElement("div");
-        divJornada.className = "jornada-card";
-        divJornada.innerHTML = `<h2 class="jornada-titulo">${jornadaDoc.data().nombre}</h2>`;
+  const partidosRenderizados = await Promise.all(partidosSnap.docs.map(async (partidoDoc) => {
+    const partido = partidoDoc.data();
 
-        const divPartidos = document.createElement("div");
-        divPartidos.className = "partidos-container";
-        partidosRenderizados.forEach(p => divPartidos.appendChild(p));
-        
-        divJornada.appendChild(divPartidos);
-        return divJornada;
-      });
+    const [equipoLocalSnap, equipoVisitanteSnap] = await Promise.all([
+      getDoc(doc(db, "equipos", partido.equipoLocal)),
+      getDoc(doc(db, "equipos", partido.equipoVisitante))
+    ]);
 
-      const jornadas = await Promise.all(jornadasPromesas);
-      jornadas.filter(j => j !== null).forEach(j => listaJornadas.appendChild(j));
+    return crearElementoPartido({
+      ...partido,
+      id: partidoDoc.id,
+      equipoLocal: { ...equipoLocalSnap.data(), id: equipoLocalSnap.id },
+      equipoVisitante: { ...equipoVisitanteSnap.data(), id: equipoVisitanteSnap.id }
+    }, jornadaDoc.id);
+  }));
 
-    } catch (error) {
-      console.error("Error cargando calendario:", error);
-      listaJornadas.innerHTML = "<p class='error'>⚠️ Error al cargar el calendario</p>";
-    }
+  const divJornada = document.createElement("div");
+  divJornada.className = "jornada-card";
+  divJornada.innerHTML = `<h2 class="jornada-titulo">${jornadaData.nombre}</h2>`;
+
+  const divPartidos = document.createElement("div");
+  divPartidos.className = "partidos-container";
+  partidosRenderizados.forEach(p => divPartidos.appendChild(p));
+
+  divJornada.appendChild(divPartidos);
+  return divJornada;
+}));
+
+// Solo añadir jornadas no nulas
+jornadas.filter(j => j !== null).forEach(j => listaJornadas.appendChild(j));
+
+
+    jornadas.forEach(j => listaJornadas.appendChild(j));
   });
 }
 
-// Función para crear la tarjeta de un partido
-  async function crearElementoPartido(partido, jornadaId) {
+async function crearElementoPartido(partido, jornadaId) {
   const divPartido = document.createElement("div");
   divPartido.className = "partido-card";
 
   try {
-    // Obtener datos de los equipos desde Firestore usando los IDs
-    const [equipoLocalSnap, equipoVisitanteSnap] = await Promise.all([
-      getDoc(doc(db, "equipos", partido.equipoLocal)), // 🟢 Usar el ID string
-      getDoc(doc(db, "equipos", partido.equipoVisitante))
-    ]);
-
-    // Extraer datos de los equipos
-    const equipoLocal = equipoLocalSnap.data();
-    const equipoVisitante = equipoVisitanteSnap.data();
-
-    // Verificar permisos de edición
-    const puedeEditar = usuarioActual && (
-      equipoLocal.jugadores.includes(usuarioActual.uid) || // 🟢 Acceder a jugadores del equipo
-      equipoVisitante.jugadores.includes(usuarioActual.uid)
-    );
-    
+    const puedeEditar = usuarioActual &&
+      (partido.equipoLocal.jugadores.includes(usuarioActual.uid) ||
+       partido.equipoVisitante.jugadores.includes(usuarioActual.uid));
     const tieneResultado = !!partido.resultado;
 
-    // Formatear fecha
-    const fechaTimestamp = partido.fecha?.toDate?.() || new Date(partido.fecha);
-    const fechaFormateada = fechaTimestamp.toISOString().split('T')[0] || 'Fecha no definida';
+    const resultadoHTML = tieneResultado ? `
+      <div class="resultado-final">
+        <span>${formatearResultado(partido.resultado)}</span>
+      </div>
+    ` : '';
 
-    // Generar HTML
+    const botonEditarHTML = !tieneResultado && puedeEditar ? `
+      <button class="btn-mostrar-editor">Registrar Resultado</button>
+    ` : '';
+
     divPartido.innerHTML = `
       <div class="encabezado-partido">
-        <h3>${equipoLocal.nombre} <span class="vs">VS</span> ${equipoVisitante.nombre}</h3> <!-- 🟢 Nombres reales -->
-        ${!tieneResultado && puedeEditar ? 
-          `<button class="btn-mostrar-editor">⚡ Registrar Resultado</button>` : ''}
+        <h3>${partido.equipoLocal.nombre} <span class="vs">VS</span> ${partido.equipoVisitante.nombre}</h3>
+        ${botonEditarHTML}
       </div>
-
-      ${tieneResultado ? `
-        <div class="resultado-final">
-          ${formatearResultado(partido.resultado)}
-        </div>
-      ` : ''}
 
       <div class="editor-partido" style="display: none;">
         <div class="fecha-container">
-          <label>📅 Fecha:
-            <input type="date" class="input-fecha" value="${fechaFormateada}">
+          <label>Fecha:
+            <input type="date" class="input-fecha"
+              value="${partido.fecha?.toDate?.().toISOString().split('T')[0] || ''}">
           </label>
         </div>
         ${generarSetsHTML(partido, puedeEditar)}
-        <button class="btn-guardar" 
-                data-jornada="${jornadaId}" 
+        <button class="btn-guardar"
+                data-jornada="${jornadaId}"
                 data-partido="${partido.id}">
-          💾 Guardar Cambios
+          Guardar Cambios
         </button>
       </div>
+
+      ${resultadoHTML}
     `;
 
-    // Manejar clics
     if (!tieneResultado && puedeEditar) {
       divPartido.querySelector(".btn-mostrar-editor").addEventListener("click", (e) => {
         e.target.style.display = "none";
@@ -138,23 +113,21 @@ function cargarCalendario() {
       });
     }
 
-    if (puedeEditar) {
+    if (puedeEditar && !tieneResultado) {
       divPartido.querySelector(".btn-guardar").addEventListener("click", async () => {
         const datos = obtenerDatosFormulario(divPartido);
         await guardarCambios(jornadaId, partido.id, datos);
-        location.reload();
       });
     }
 
   } catch (err) {
     console.error("Error mostrando partido:", err);
-    divPartido.innerHTML = `<p class="error">⚠️ Error al cargar el partido</p>`;
+    divPartido.innerHTML = `<p>Error al cargar el partido</p>`;
   }
 
   return divPartido;
 }
 
-// Funciones auxiliares
 function generarSetsHTML(partido, editable) {
   const resultado = partido.resultado || {};
   return Array.from({ length: 3 }, (_, i) => {
@@ -166,16 +139,12 @@ function generarSetsHTML(partido, editable) {
         <input type="number"
                class="input-set"
                ${!editable ? 'disabled' : ''}
-               value="${set.puntos1}" 
-               min="0" 
-               placeholder="0">
+               value="${set.puntos1}" min="0" placeholder="0">
         <span class="separador">-</span>
         <input type="number"
                class="input-set"
                ${!editable ? 'disabled' : ''}
-               value="${set.puntos2}" 
-               min="0" 
-               placeholder="0">
+               value="${set.puntos2}" min="0" placeholder="0">
       </div>
     `;
   }).join("");
@@ -209,64 +178,89 @@ function obtenerDatosFormulario(divPartido) {
   };
 }
 
-// Actualizar datos en Firestore
 async function guardarCambios(jornadaId, partidoId, datos) {
   try {
+    // 1. Guardar resultado en el partido
     await updateDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`), datos);
-    
-    const partidoSnap = await getDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`));
+
+    // 2. Leer partido actualizado (para asegurarnos que tenemos datos correctos)
+    const partidoRef = doc(db, `calendario/${jornadaId}/partidos/${partidoId}`);
+    const partidoSnap = await getDoc(partidoRef);
     const partido = partidoSnap.data();
 
-    // Cálculos de sets y puntos
+    if (!partido || !partido.resultado) {
+      alert("Error: resultado no encontrado después de guardar.");
+      return;
+    }
+
+    // 3. Calcular sets ganados/perdidos, puntos a favor/en contra
     const sets = Object.values(partido.resultado);
-    let [setsLocal, setsVisitante, puntosLocal, puntosVisitante] = [0, 0, 0, 0];
-    
+    let setsGanadosLocal = 0, setsGanadosVisitante = 0;
+    let puntosLocal = 0, puntosVisitante = 0;
+
     sets.forEach(set => {
-      if (set.puntos1 > set.puntos2) setsLocal++;
-      else if (set.puntos2 > set.puntos1) setsVisitante++;
+      if (set.puntos1 > set.puntos2) setsGanadosLocal++;
+      else if (set.puntos2 > set.puntos1) setsGanadosVisitante++;
+
       puntosLocal += set.puntos1;
       puntosVisitante += set.puntos2;
     });
 
-    // Actualizar clasificación
-    const batch = writeBatch(db);
-    
-    // Equipo local
-    const localRef = doc(db, "clasificacion", partido.equipoLocal.id);
-    const localSnap = await getDoc(localRef);
+    // Determinar ganador del partido
+    let partidosGanadosLocal = 0, partidosGanadosVisitante = 0;
+    if (setsGanadosLocal > setsGanadosVisitante) partidosGanadosLocal = 1;
+    else if (setsGanadosVisitante > setsGanadosLocal) partidosGanadosVisitante = 1;
+
+    // 4. Actualizar clasificación de ambos equipos
+    // Suponiendo que la colección "clasificacion" tiene documentos por equipo con id = equipoId
+
+    const clasificacionLocalRef = doc(db, "clasificacion", partido.equipoLocal);
+    const clasificacionVisitanteRef = doc(db, "clasificacion", partido.equipoVisitante);
+
+    // Leer datos actuales
+    const [localSnap, visitanteSnap] = await Promise.all([
+      getDoc(clasificacionLocalRef),
+      getDoc(clasificacionVisitanteRef)
+    ]);
+
     const localData = localSnap.exists() ? localSnap.data() : {};
-    
-    batch.set(localRef, {
-      setsGanados: (localData.setsGanados || 0) + setsLocal,
-      setsPerdidos: (localData.setsPerdidos || 0) + setsVisitante,
-      puntosFavor: (localData.puntosFavor || 0) + puntosLocal,
-      puntosContra: (localData.puntosContra || 0) + puntosVisitante,
-      diferencia: (localData.diferencia || 0) + (puntosLocal - puntosVisitante)
-    }, { merge: true });
-
-    // Equipo visitante
-    const visitanteRef = doc(db, "clasificacion", partido.equipoVisitante.id);
-    const visitanteSnap = await getDoc(visitanteRef);
     const visitanteData = visitanteSnap.exists() ? visitanteSnap.data() : {};
-    
-    batch.set(visitanteRef, {
-      setsGanados: (visitanteData.setsGanados || 0) + setsVisitante,
-      setsPerdidos: (visitanteData.setsPerdidos || 0) + setsLocal,
-      puntosFavor: (visitanteData.puntosFavor || 0) + puntosVisitante,
-      puntosContra: (visitanteData.puntosContra || 0) + puntosLocal,
-      diferencia: (visitanteData.diferencia || 0) + (puntosVisitante - puntosLocal)
-    }, { merge: true });
 
-    await batch.commit();
-    alert("✅ Clasificación actualizada");
+    // Función para sumar valores o inicializar si no existen
+    function sumar(a, b) {
+      return (a || 0) + b;
+    }
 
+    // Actualizar local
+    await updateDoc(clasificacionLocalRef, {
+      setsGanados: sumar(localData.setsGanados, setsGanadosLocal),
+      setsPerdidos: sumar(localData.setsPerdidos, setsGanadosVisitante),
+      partidosGanados: sumar(localData.partidosGanados, partidosGanadosLocal),
+      partidosPerdidos: sumar(localData.partidosPerdidos, partidosGanadosVisitante),
+      puntosFavor: sumar(localData.puntosFavor, puntosLocal),
+      puntosContra: sumar(localData.puntosContra, puntosVisitante),
+      diferenciaPuntos: sumar(localData.diferenciaPuntos, puntosLocal - puntosVisitante)
+    });
+
+    // Actualizar visitante
+    await updateDoc(clasificacionVisitanteRef, {
+      setsGanados: sumar(visitanteData.setsGanados, setsGanadosVisitante),
+      setsPerdidos: sumar(visitanteData.setsPerdidos, setsGanadosLocal),
+      partidosGanados: sumar(visitanteData.partidosGanados, partidosGanadosVisitante),
+      partidosPerdidos: sumar(visitanteData.partidosPerdidos, partidosGanadosLocal),
+      puntosFavor: sumar(visitanteData.puntosFavor, puntosVisitante),
+      puntosContra: sumar(visitanteData.puntosContra, puntosLocal),
+      diferenciaPuntos: sumar(visitanteData.diferenciaPuntos, puntosVisitante - puntosLocal)
+    });
+
+    alert("✅ Resultados y clasificación actualizados");
   } catch (err) {
     console.error("❌ Error guardando cambios:", err);
     alert("Error al guardar: " + err.message);
   }
 }
 
-// Inicializar
+
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioActual = user;
