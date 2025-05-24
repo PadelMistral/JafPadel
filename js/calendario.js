@@ -55,8 +55,6 @@ const jornadas = await Promise.all(snapshot.docs.map(async (jornadaDoc) => {
 // Solo añadir jornadas no nulas
 jornadas.filter(j => j !== null).forEach(j => listaJornadas.appendChild(j));
 
-
-    jornadas.forEach(j => listaJornadas.appendChild(j));
   });
 }
 
