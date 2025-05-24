@@ -65,7 +65,7 @@ async function crearElementoPartido(partido, jornadaId) {
   try {
 // Verifica si es admin O si es jugador de alguno de los equipos
 const puedeEditar = usuarioActual && (
-  usuarioActual.rol === "admin" || 
+  usuarioActual.rol === "Admin" || 
   partido.equipoLocal.jugadores.includes(usuarioActual.uid) || 
   partido.equipoVisitante.jugadores.includes(usuarioActual.uid)
 );
