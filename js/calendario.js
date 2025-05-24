@@ -1,9 +1,8 @@
 // calendario.js (corregido)
 import { auth, db } from './firebase-config.js';
 import {
-  collection, query, onSnapshot, doc, getDoc, updateDoc, getDocs, Timestamp
-} from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+  collection, query, onSnapshot, doc, getDoc, updateDoc, getDocs, Timestamp, deleteDoc, setDoc
+}import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
 
 const listaJornadas = document.getElementById("lista-jornadas");
 let usuarioActual = null;
@@ -12,7 +11,7 @@ function cargarCalendario() {
   onSnapshot(collection(db, "calendario"), async (snapshot) => {
     listaJornadas.innerHTML = "";
 
-    import { deleteDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    
 
 // Dentro de cargarCalendario():
 const jornadas = await Promise.all(snapshot.docs.map(async (jornadaDoc) => {
