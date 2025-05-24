@@ -332,3 +332,141 @@ body {
   outline: 3px solid #00cfc8;
   outline-offset: 2px;
 }
+/* ESTILOS GENERALES */
+button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  margin: 2px;
+  font-size: 14px;
+}
+
+/* BOTONES DE ACCIÓN */
+.editar-resultado, .editar-fecha, .editar-nombre-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.borrar-partido, .eliminar-usuario, .eliminar-equipo, .rechazar {
+  background-color: #f44336;
+  color: white;
+}
+
+.aprobar {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.cancelar-edicion {
+  background-color: #ff9800;
+  color: white;
+}
+
+button[type="submit"], .guardar-nombre-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+/* EFECTOS HOVER */
+button:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+/* LISTA DE USUARIOS */
+#lista-usuarios li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.usuario-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.edit-nombre {
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  flex-grow: 1;
+}
+
+/* TARJETAS DE PARTIDOS */
+.admin-partido-card {
+  background: #fff;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.partido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.partido-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.resultado-display {
+  margin: 10px 0;
+  padding: 10px;
+  background: #e9f7ef;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* FORMULARIOS */
+.form-editar-resultado {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.form-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+/* PARTIDOS PENDIENTES */
+.pendiente-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pendiente-actions {
+  display: flex;
+  gap: 5px;
+}
+
+/* SELECTORES */
+select, input[type="datetime-local"] {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin: 5px 0;
+}
