@@ -260,12 +260,29 @@ async function guardarCambios(jornadaId, partidoId, datos) {
 }
 
 
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-    usuarioActual = user, rol: userDoc.data().rol;
-    cargarCalendario();
-  } else {
+onAuthStateChanged(auth, async (user) => {
+  try {
+    if (user) {
+      // Obtener documento del usuario
+      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+      
+      if (!userDoc.exists()) {
+        throw new Error("Usuario no registrado en la base de datos");
+      }
+
+      // Crear objeto de usuario combinando datos de Auth y Firestore
+      usuarioActual = {
+        ...user,          // Datos básicos de autenticación
+        rol: userDoc.data().rol || 'usuario'  // Rol con valor por defecto
+      };
+
+      cargarCalendario();
+    } else {
+      window.location.href = "index.html";
+    }
+  } catch (error) {
+    console.error("Error en autenticación:", error);
+    auth.signOut();
     window.location.href = "index.html";
   }
 });
