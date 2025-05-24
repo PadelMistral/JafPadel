@@ -1,8 +1,9 @@
 import { auth, db } from './firebase-config.js';
+// En calendario.js, línea 2:
 import { 
   collection, query, onSnapshot, doc, getDoc, updateDoc, getDocs, 
-  Timestamp, deleteDoc, setDoc, writeBatch
-} from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+  Timestamp, deleteDoc, setDoc, writeBatch // 🟢 Añade writeBatch aquí
+} from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";;
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
 
 const listaJornadas = document.getElementById("lista-jornadas");
@@ -17,14 +18,18 @@ function cargarCalendario() {
         const partidosRef = collection(db, `calendario/${jornadaDoc.id}/partidos`);
         const partidosSnap = await getDocs(partidosRef);
 
+        // Eliminar jornada vacía
         if (partidosSnap.empty) {
           await deleteDoc(doc(db, "calendario", jornadaDoc.id));
           return null;
         }
 
+        // Procesar partidos
         const partidosRenderizados = await Promise.all(
           partidosSnap.docs.map(async (partidoDoc) => {
             const partido = partidoDoc.data();
+            
+            // Obtener datos completos de equipos
             const [equipoLocalSnap, equipoVisitanteSnap] = await Promise.all([
               getDoc(doc(db, "equipos", partido.equipoLocal)),
               getDoc(doc(db, "equipos", partido.equipoVisitante))
@@ -39,6 +44,7 @@ function cargarCalendario() {
           })
         );
 
+        // Crear elemento de jornada
         const divJornada = document.createElement("div");
         divJornada.className = "jornada-card";
         divJornada.innerHTML = `<h2 class="jornada-titulo">${jornadaDoc.data().nombre}</h2>`;
@@ -66,6 +72,7 @@ async function crearElementoPartido(partido, jornadaId) {
   divPartido.className = "partido-card";
 
   try {
+    // Verificar permisos de edición
     const puedeEditar = usuarioActual && (
       partido.equipoLocal.jugadores.includes(usuarioActual.uid) || 
       partido.equipoVisitante.jugadores.includes(usuarioActual.uid)
@@ -73,10 +80,11 @@ async function crearElementoPartido(partido, jornadaId) {
     
     const tieneResultado = !!partido.resultado;
 
-    // Manejo seguro de fechas
+    // Formatear fecha
     const fechaTimestamp = partido.fecha?.toDate?.() || new Date(partido.fecha);
-    const fechaFormateada = fechaTimestamp.toISOString().split('T')[0] || '';
+    const fechaFormateada = fechaTimestamp.toISOString().split('T')[0];
 
+    // Generar HTML
     divPartido.innerHTML = `
       <div class="encabezado-partido">
         <h3>${partido.equipoLocal.nombre} <span class="vs">VS</span> ${partido.equipoVisitante.nombre}</h3>
@@ -105,6 +113,7 @@ async function crearElementoPartido(partido, jornadaId) {
       </div>
     `;
 
+    // Manejar clics
     if (!tieneResultado && puedeEditar) {
       divPartido.querySelector(".btn-mostrar-editor").addEventListener("click", (e) => {
         e.target.style.display = "none";
@@ -128,63 +137,21 @@ async function crearElementoPartido(partido, jornadaId) {
   return divPartido;
 }
 
-function generarSetsHTML(partido, editable) {
-  const resultado = partido.resultado || {};
-  return Array.from({ length: 3 }, (_, i) => {
-    const setNum = i + 1;
-    const set = resultado[`set${setNum}`] || { puntos1: "", puntos2: "" };
-    return `
-      <div class="set">
-        <span class="set-numero">Set ${setNum}</span>
-        <input type="number"
-               class="input-set"
-               ${!editable ? 'disabled' : ''}
-               value="${set.puntos1}" min="0" placeholder="0">
-        <span class="separador">-</span>
-        <input type="number"
-               class="input-set"
-               ${!editable ? 'disabled' : ''}
-               value="${set.puntos2}" min="0" placeholder="0">
-      </div>
-    `;
-  }).join("");
-}
-
-function formatearResultado(resultado) {
-  const sets = Object.values(resultado || {});
-  const marcador = sets.reduce((acc, set) => {
-    acc.local += set.puntos1;
-    acc.visitante += set.puntos2;
-    return acc;
-  }, { local: 0, visitante: 0 });
-
-  return `
-    <div class="marcador-final">${marcador.local} - ${marcador.visitante}</div>
-    <div class="sets-detalle">
-      ${sets.map((s, i) => `Set ${i + 1}: ${s.puntos1}-${s.puntos2}`).join(" | ")}
-    </div>
-  `;
-}
-
-function obtenerDatosFormulario(divPartido) {
-  const inputs = divPartido.querySelectorAll("input");
-  return {
-    fecha: Timestamp.fromDate(new Date(inputs[0].value)),
-    resultado: {
-      set1: { puntos1: Number(inputs[1].value), puntos2: Number(inputs[2].value) },
-      set2: { puntos1: Number(inputs[3].value), puntos2: Number(inputs[4].value) },
-      set3: { puntos1: Number(inputs[5].value), puntos2: Number(inputs[6].value) }
-    }
-  };
-}
+// Funciones auxiliares (mantener igual que en tu código original)
+function generarSetsHTML(partido, editable) { /* ... */ }
+function formatearResultado(resultado) { /* ... */ }
+function obtenerDatosFormulario(divPartido) { /* ... */ }
 
 async function guardarCambios(jornadaId, partidoId, datos) {
   try {
+    // Actualizar partido
     await updateDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`), datos);
     
+    // Actualizar clasificación
     const partidoSnap = await getDoc(doc(db, `calendario/${jornadaId}/partidos/${partidoId}`));
     const partido = partidoSnap.data();
 
+    // Cálculos de sets/puntos
     const sets = Object.values(partido.resultado);
     let [setsLocal, setsVisitante, puntosLocal, puntosVisitante] = [0, 0, 0, 0];
     
@@ -195,9 +162,10 @@ async function guardarCambios(jornadaId, partidoId, datos) {
       puntosVisitante += set.puntos2;
     });
 
+    // Actualizar ambos equipos
     const batch = writeBatch(db);
     
-    // Actualización equipo local
+    // Equipo local
     const localRef = doc(db, "clasificacion", partido.equipoLocal);
     const localSnap = await getDoc(localRef);
     const localData = localSnap.exists() ? localSnap.data() : {};
@@ -210,7 +178,7 @@ async function guardarCambios(jornadaId, partidoId, datos) {
       diferencia: (localData.diferencia || 0) + (puntosLocal - puntosVisitante)
     }, { merge: true });
 
-    // Actualización equipo visitante
+    // Equipo visitante
     const visitanteRef = doc(db, "clasificacion", partido.equipoVisitante);
     const visitanteSnap = await getDoc(visitanteRef);
     const visitanteData = visitanteSnap.exists() ? visitanteSnap.data() : {};
@@ -232,6 +200,7 @@ async function guardarCambios(jornadaId, partidoId, datos) {
   }
 }
 
+// Inicializar
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioActual = user;
