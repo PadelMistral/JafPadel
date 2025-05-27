@@ -208,7 +208,7 @@ body, html {
 }
 
 /* Responsive: móvil */
-@media (max-width: 480px) {
+@media (max-width: 780px) {
   .chat-container {
     height: 100vh;
     border-radius: 0;
