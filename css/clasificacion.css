@@ -80,6 +80,9 @@ body.pagina-principal {
 /* --- TABLA --- */
 table {
   width: 100%;
+  max-width: 100%;
+  table-layout: fixed; /* Muy importante para que las celdas se ajusten */
+  word-wrap: break-word;
   border-collapse: collapse;
   font-size: 1rem;
   color: #cceeee;
@@ -97,8 +100,9 @@ th, td {
 th {
   background-color: #00cfc8;
   color: #121212;
-  font-weight: 700;
+  font-weight: bold;
   letter-spacing: 0.05em;
+  font-size: 2rem;
 }
 
 tr:nth-child(even) {
@@ -203,21 +207,18 @@ button:active, .btn:active {
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
-  .tabla-clasificacion {
-    min-width: 600px;
-    overflow-x: auto;
-    display: block;
+  table {
+    font-size: 0.85rem;
+    word-break: break-word;
   }
-  
-  .contenedor-clasificacion {
-    overflow-x: auto;
-    padding-bottom: 1rem;
+
+  th, td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
   }
-  
-  .tabla-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+
+  .titulo {
+    font-size: 1.5rem;
   }
 }
 
@@ -235,4 +236,9 @@ button:active, .btn:active {
 
 .fila-equipo {
   animation: entradaFila 0.4s ease forwards;
+}
+
+#tabla-clasificacion {
+  width: 100%;
+  overflow-wrap: break-word;
 }
