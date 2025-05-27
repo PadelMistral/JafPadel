@@ -57,25 +57,15 @@ body.pagina-principal {
 
 /* Responsive Menu hamburguesa */
 @media (max-width: 768px) {
-  .menu-navegacion ul {
-    flex-direction: column;
-    background: #1e1e2f;
-    position: absolute;
-    top: 60px;
-    right: 0;
-    width: 220px;
-    border-radius: 0 0 0 8px;
-    padding: 1rem;
-    display: none;
-  }
+
 
 /* --- CONTENIDO PRINCIPAL --- */
 .contenido-principal {
   max-width: 960px;
   margin: 3rem auto;
   padding: 2rem 1.5rem;
-  background: #1e1e2f;
-  box-shadow: 0 8px 20px rgba(0, 207, 200, 0.25);
+  background: #1e1e2fb7;
+  box-shadow: 0 8px 20px rgba(0, 207, 200, 0.418);
   border-radius: 12px;
   animation: fadeSlideUp 0.8s ease;
   transition: box-shadow 0.4s ease, transform 0.4s ease;
@@ -142,6 +132,11 @@ tr:hover td.icono-logo svg {
   filter: drop-shadow(0 0 4px #66f0eccc);
 }
 
+.puntos-header {
+  background-color: #0d8686 !important;
+  color: #000;
+}
+
 /* --- BOTONES --- */
 button, .btn {
   background-color: #00cfc8;
@@ -174,4 +169,70 @@ button:active, .btn:active {
 .animate-delay-3 { animation-delay: 0.45s; }
 .animate-delay-4 { animation-delay: 0.6s; }
 .animate-delay-5 { animation-delay: 0.75s; }
+}
+
+
+.diferencia-positiva {
+  color: #00b894;
+  font-weight: 600;
+}
+
+.diferencia-negativa {
+  color: #d63031;
+  font-weight: 600;
+}
+
+/* Puntos destacados */
+.col-puntos {
+  background: #e0f38dc7;
+  color: #000000;
+  font-weight: bold;
+  border-radius: 5px;
+  padding: 0.25rem .65rem;
+  display: inline-block;
+}
+
+/* --- Efectos de Ranking --- */
+.fila-equipo.top-4 {
+  background: linear-gradient(90deg, #0011fd52 0%, rgba(227,250,252,0) 100%);
+}
+
+.fila-equipo.descenso {
+  background: linear-gradient(90deg, #f01d1d3b 0%, rgba(255,227,227,0) 100%);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .tabla-clasificacion {
+    min-width: 600px;
+    overflow-x: auto;
+    display: block;
+  }
+  
+  .contenedor-clasificacion {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  
+  .tabla-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+/* --- Animaciones --- */
+@keyframes entradaFila {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fila-equipo {
+  animation: entradaFila 0.4s ease forwards;
 }

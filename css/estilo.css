@@ -27,10 +27,9 @@ html {
     scroll-behavior: smooth;
     font-size: 16px;
 }
-
-body {
+.pagina-principal {
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--fondo-oscuro);
+    background: url(https://img.freepik.com/foto-gratis/paleta-alto-angulo-bolas-campo_23-2149459007.jpg?semt=ais_hybrid&w=740) no-repeat center center fixed;
     color: var(--texto-blanco);
     line-height: 1.7;
     min-height: 100vh;
@@ -39,9 +38,14 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.fondo{
+  background: url(https://png.pngtree.com/background/20220727/original/pngtree-electronic-circuit-design-on-a-dark-purple-background-picture-image_1841456.jpg);
+}
+
+
 /* Encabezado Profesional */
 .encabezado {
-    background: rgba(27, 38, 59, 0.97);
+    background: url(https://www.wilson.com/sites/default/files/styles/none/public/24-0940%20_Pacev1_CLP_Header_1.png?) center / cover no-repeat;
     padding: 1.2rem 2rem;
     position: sticky;
     top: 0;
@@ -53,11 +57,27 @@ body {
     border-bottom: 1px solid var(--borde);
 }
 
+.tituloLog{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo img {
+    height: 70px;
+    width: 70px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ff88b7;
+}
+
+
 .titulo {
     background: var(--degradado);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+        color: rgba(45, 255, 202, 0.808);
+    text-shadow: 1px 1px 2px rgb(207, 255, 95), 0px 0px 1px rgb(0, 0, 0), 2px 2px 1px rgb(0, 0, 0);
     font-size: 2.2rem;
     font-weight: 800;
     letter-spacing: -1px;
@@ -324,13 +344,12 @@ body {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
-    background-image: 
-        linear-gradient(rgba(17, 27, 33, 0.9), rgba(17, 27, 33, 0.9)),
-        url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect fill="%2317222d" x="0" y="0" width="100" height="100"/></svg>');
+    background:url(https://preview.redd.it/3jfjc53fsyb61.jpg?width=1080&crop=smart&auto=webp&s=161a8f34a8749e4bf539c7a3b22d30983b46daef) center / cover no-repeat;
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
 }
+
 
 .mensaje {
     max-width: 80%;

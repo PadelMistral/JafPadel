@@ -6,6 +6,16 @@ import {
 
 const tablaClasificacion = document.getElementById("tabla-clasificacion");
 
+// Función para generar color único basado en el nombre del equipo
+function generarColorEquipo(nombreEquipo) {
+  let hash = 0;
+  for (let i = 0; i < nombreEquipo.length; i++) {
+    hash = nombreEquipo.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash % 360);
+  return `hsl(${h}, 70%, 40%)`;
+}
+
 // 1. Obtener mapa de equipos con inicialización de campos
 async function obtenerEquiposMap() {
   const equiposSnap = await getDocs(collection(db, "equipos"));
@@ -15,6 +25,7 @@ async function obtenerEquiposMap() {
       id: docu.id,
       nombre: docu.data().nombre,
       puntos: 0,
+      partidosJugados: 0,
       setsGanados: 0,
       setsPerdidos: 0,
       juegosGanados: 0,
@@ -35,15 +46,17 @@ async function calcularClasificacion(equiposMap) {
       const partido = partidoDoc.data();
       if (!partido.resultado) continue;
 
-      // Aquí partido.equipoLocal y partido.equipoVisitante son IDs string
       const local = equiposMap[partido.equipoLocal];
       const visitante = equiposMap[partido.equipoVisitante];
 
-      // Asegurar que ambos equipos existen
       if (!local || !visitante) {
-        console.warn("Equipo local o visitante no encontrado en equiposMap", partido.equipoLocal, partido.equipoVisitante);
+        console.warn("Equipo local o visitante no encontrado", partido.equipoLocal, partido.equipoVisitante);
         continue;
       }
+
+      // Incrementar partidos jugados
+      local.partidosJugados++;
+      visitante.partidosJugados++;
 
       let setsLocal = 0, setsVisitante = 0;
       let juegosLocal = 0, juegosVisitante = 0;
@@ -56,7 +69,7 @@ async function calcularClasificacion(equiposMap) {
         juegosVisitante += set.puntos2 || 0;
       });
 
-      // Actualizar estadísticas por equipo
+      // Actualizar estadísticas
       local.setsGanados += setsLocal;
       local.setsPerdidos += setsVisitante;
       local.juegosGanados += juegosLocal;
@@ -67,7 +80,7 @@ async function calcularClasificacion(equiposMap) {
       visitante.juegosGanados += juegosVisitante;
       visitante.juegosPerdidos += juegosLocal;
 
-      // Asignar puntos por victoria/derrota en sets
+      // Asignar puntos
       if (setsLocal > setsVisitante) {
         local.puntos += 2;
         visitante.puntos += 1;
@@ -75,7 +88,6 @@ async function calcularClasificacion(equiposMap) {
         visitante.puntos += 2;
         local.puntos += 1;
       } else {
-        // Empate (si aplica)
         local.puntos += 1;
         visitante.puntos += 1;
       }
@@ -94,7 +106,7 @@ async function calcularClasificacion(equiposMap) {
   });
 }
 
-// 3. Guardar clasificación en Firestore (reemplazando toda la colección)
+// 3. Guardar clasificación en Firestore
 async function guardarClasificacion(clasificacion) {
   const batch = writeBatch(db);
   const clasificacionRef = collection(db, "clasificacion");
@@ -109,6 +121,7 @@ async function guardarClasificacion(clasificacion) {
     batch.set(docRef, {
       posicion: index + 1,
       nombre: equipo.nombre,
+      partidosJugados: equipo.partidosJugados,
       puntos: equipo.puntos,
       setsGanados: equipo.setsGanados,
       setsPerdidos: equipo.setsPerdidos,
@@ -124,40 +137,67 @@ async function guardarClasificacion(clasificacion) {
 // 4. Mostrar la clasificación en la tabla HTML
 function mostrarClasificacion(clasificacion) {
   tablaClasificacion.innerHTML = `
-    <tr>
-      <th>Pos</th>
-      <th>Equipo</th>
-      <th>Pts</th>
-      <th>Sets (G/P)</th>
-      <th>Juegos (G/P)</th>
-      <th>Diferencia Juegos</th>
-    </tr>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Equipo</th>
+        <th>PJ</th>
+        <th>Sets</th>
+        <th>Juegos</th>
+        <th>Dif.</th>
+        <th>Puntos</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${clasificacion.map((eq, index) => `
+        <tr class="fila-equipo ${index < 3 ? 'top-4' : ''}">
+          <td class="col-posicion">${index + 1}</td>
+          <td>
+            <div class="nombre-equipo">
+              
+              ${eq.nombre}
+            </div>
+          </td>
+          <td class="col-estadistica">${eq.partidosJugados}</td>
+          <td class="col-estadistica">${eq.setsGanados}/${eq.setsPerdidos}</td>
+          <td class="col-estadistica">${eq.juegosGanados}/${eq.juegosPerdidos}</td>
+          <td class="${(eq.juegosGanados - eq.juegosPerdidos) >= 0 ? 'diferencia-positiva' : 'diferencia-negativa'}">
+            ${eq.juegosGanados - eq.juegosPerdidos}
+          </td>
+          <td><span class="col-puntos">${eq.puntos}</span></td>
+        </tr>
+      `).join('')}
+    </tbody>
   `;
-
-  clasificacion.forEach(eq => {
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${eq.posicion}</td>
-      <td>${eq.nombre}</td>
-      <td>${eq.puntos}</td>
-      <td>${eq.setsGanados}/${eq.setsPerdidos}</td>
-      <td>${eq.juegosGanados}/${eq.juegosPerdidos}</td>
-      <td>${eq.juegosGanados - eq.juegosPerdidos}</td>
-    `;
-    tablaClasificacion.appendChild(fila);
+  
+  // Añadir clase de descenso a últimos equipos (ejemplo últimos 2)
+  const filas = tablaClasificacion.querySelectorAll('tr.fila-equipo');
+  const totalEquipos = filas.length;
+  filas.forEach((fila, index) => {
+    if (index >= totalEquipos - 2) {
+      fila.classList.add('descenso');
+    }
   });
+
+    // Aplicar estilos de color
+    fila.style.backgroundColor = colorEquipo;
+    fila.style.color = 'white';
+    fila.style.fontWeight = 'bold';
+    
+    tablaClasificacion.appendChild(fila);
+  
 }
 
 // 5. Inicializar escuchas y lógica general
 async function iniciar() {
-  // Escuchar cambios en "calendario" para recalcular y guardar clasificación
+  // Escuchar cambios en "calendario"
   onSnapshot(collection(db, "calendario"), async () => {
     const equiposMap = await obtenerEquiposMap();
     const clasificacion = await calcularClasificacion(equiposMap);
     await guardarClasificacion(clasificacion);
   });
 
-  // Escuchar cambios en "clasificacion" para actualizar la tabla en vivo
+  // Escuchar cambios en "clasificacion"
   onSnapshot(collection(db, "clasificacion"), (snapshot) => {
     const clasificacion = [];
     snapshot.forEach(doc => clasificacion.push({ ...doc.data(), id: doc.id }));
@@ -166,4 +206,3 @@ async function iniciar() {
 }
 
 iniciar();
-
