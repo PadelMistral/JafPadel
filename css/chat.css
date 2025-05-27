@@ -1,225 +1,88 @@
-/* Reset */
-* {
-  box-sizing: border-box;
+/* Asegura que el body y html ocupen el 100% */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #000; /* fondo negro si queda algún hueco */
+  font-family: Arial, sans-serif;
+}
+
+/* Asegura que el contenido principal se extienda al máximo disponible */
+.contenido-principal {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 100px); /* ajusta a la altura del header si mide 100px */
   margin: 0;
   padding: 0;
 }
 
-body, html {
-  height: 100%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #121212;
-  color: #e0e0e0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header */
-.encabezado {
-  background-color: #075e54;
-  padding: 1rem 1.5rem;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: 0 2px 6px #000000aa;
-}
-
-.titulo {
-  font-weight: 700;
-  font-size: 1.4rem;
-}
-
-
-/* Contenido principal (flex-grow para que ocupe todo el alto) */
-.contenido-principal {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  background: #121212;
-  padding: 1rem;
-  overflow: hidden;
-}
-
-/* Contenedor chat */
+/* Contenedor principal del chat */
 .chat-container {
-  background: #1f1f1f;
-  max-width: 600px;
-  width: 100%;
-  height: 90vh;
-  border-radius: 10px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 15px #25d36644;
+  height: 100%;
+  background-color: #f0f0f0;
 }
 
-/* Mensajes - área scrollable */
+/* Área de mensajes */
 .chat-mensajes {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  scroll-behavior: smooth;
-  background: url('https://i.imgur.com/i4qRbCd.png') repeat;
-  background-size: 80px;
+  padding: 10px;
+  background-color: #e5ddd5;
 }
 
-/* Scrollbar personalizado */
-.chat-mensajes::-webkit-scrollbar {
-  width: 8px;
-}
-
-.chat-mensajes::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat-mensajes::-webkit-scrollbar-thumb {
-  background-color: #25d366aa;
-  border-radius: 20px;
-}
-
-/* Burbuja mensaje base */
-.mensaje {
-  max-width: 75%;
-  padding: 10px 15px;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  line-height: 1.3;
-  word-wrap: break-word;
-  box-shadow: 0 1px 4px #0004;
-  position: relative;
-  display: inline-block;
-}
-
-/* Mensajes enviados (usuario) - verde */
-.mensaje.enviado {
-  background-color: #25d366;
-  color: #121212;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
-  animation: fadeInUp 0.3s ease;
-}
-
-/* Mensajes recibidos - gris oscuro */
-.mensaje.recibido {
-  background-color: #323232;
-  color: #e0e0e0;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
-  animation: fadeInUp 0.3s ease;
-}
-
-/* Opcional: hora y estado debajo del mensaje */
-.mensaje .hora {
-  font-size: 0.7rem;
-  opacity: 0.6;
-  margin-top: 4px;
-  text-align: right;
-;
-}
-
-/* Formulario de envío - fijo abajo */
+/* Formulario de chat (parte inferior) */
 .formulario-chat {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.8rem 1rem;
-  background-color: #202c33;
-  border-radius: 0 0 10px 10px;
   align-items: center;
+  padding: 10px;
+  background-color: #111; /* estilo WhatsApp */
+  border-top: 1px solid #222;
+  gap: 10px;
 }
 
-/* Input texto */
+/* Input de mensaje */
 #mensaje-input {
-  flex-grow: 1;
-  background: #121b22;
-  border: none;
+  flex: 1;
+  padding: 10px 15px;
   border-radius: 20px;
-  padding: 12px 18px;
-  color: #e0e0e0;
+  border: none;
   font-size: 1rem;
-  outline-offset: 2px;
-  transition: background-color 0.2s ease;
-}
-
-#mensaje-input::placeholder {
-  color: #8f9a9d;
-}
-
-#mensaje-input:focus {
-  background-color: #1c2b34;
   outline: none;
-  box-shadow: 0 0 10px #25d366aa;
 }
 
-/* Botón enviar */
+/* Botón de adjuntar archivo */
+.btn-adjuntar {
+  color: #888;
+  font-size: 1.3em;
+  cursor: pointer;
+}
+
+/* Ocultar input file */
+#input-archivo {
+  display: none;
+}
+
+/* Botón de enviar estilo WhatsApp */
 .boton-enviar-especial {
   background-color: #25d366;
   border: none;
-  color: #121212;
-  font-weight: 700;
-  padding: 12px 18px;
   border-radius: 50%;
-  cursor: pointer;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 15px #25d366bb;
-  transition: background-color 0.3s ease, transform 0.15s ease;
-}
-
-.boton-enviar-especial:hover {
-  background-color: #20b858;
-  transform: scale(1.05);
-}
-
-.boton-enviar-especial:active {
-  transform: scale(0.95);
-}
-
-/* Icono paperclip */
-.btn-adjuntar {
-  color: #8f9a9d;
-  font-size: 1.4rem;
   cursor: pointer;
-  transition: color 0.3s ease;
 }
 
-.btn-adjuntar:hover,
-.btn-adjuntar:focus {
-  color: #25d366;
-  outline: none;
+.boton-enviar-especial::before {
+  content: "\f1d8"; /* fa-paper-plane */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: white;
+  font-size: 1.1em;
 }
 
-/* Animación fade-in para mensajes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive: móvil */
-@media (max-width: 780px) {
-  .chat-container {
-    height: 100vh;
-    border-radius: 0;
-  }
-
-  .encabezado {
-    flex-wrap: wrap;
-  }
-
-  .menu-navegacion ul {
-    flex-direction: column;
-    gap: 0.7rem;
-  }
-}
