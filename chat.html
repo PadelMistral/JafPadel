@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" >
+  <meta name="viewport" content="width=device-width, initial-scale=1" >
   <title>Chat - Liga de Pádel</title>
-  <link rel="stylesheet" href="./css/chat.css" />
-  <link rel="stylesheet" href="./css/estilo.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <link rel="shortcut icon" href="./imagenes/Logojafs.png" type="image/x-icon">
+  <link rel="stylesheet" href="./css/chat.css" >
+  <link rel="stylesheet" href="./css/estilo.css" >
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" >
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" >
 
+  <link rel="shortcut icon" href="./imagenes/Logojafs.png" type="image/x-icon">
 </head>
 <body class="pagina-principal">
   <header class="encabezado">
-               <div class="logo">
-            <img src="./imagenes/Logojafs.png" alt="Logo de JafsPadel League" width="100" height="100">
-        </div>
-    <h1 class="titulo">Chat entre Jugadores</h1>
-
+    <div class="logo">
+      <img src="./imagenes/Logojafs.png" alt="Logo de JafsPadel League" width="100" height="100">
+    </div>
+    <h1 class="titulo">Chat</h1>
     <button class="menu-hamburguesa" 
             aria-label="Menú principal"
             aria-expanded="false"
             aria-controls="menu-navegacion">
-        <span class="linea-hamburguesa"></span>
-        <span class="linea-hamburguesa"></span>
-        <span class="linea-hamburguesa"></span>
+      <span class="linea-hamburguesa"></span>
+      <span class="linea-hamburguesa"></span>
+      <span class="linea-hamburguesa"></span>
     </button>
-
     <nav class="menu-navegacion">
       <ul>
         <li><a href="./home.html">Inicio</a></li>
@@ -40,20 +39,22 @@
     </nav>
   </header>
 
-  <main class="contenido-principal">
+  <main class="contenido-principal" style="margin: 0; padding: 0;">
     <section class="chat-container">
       <div id="mensajes" class="chat-mensajes">
-        <!-- Mensajes irán aquí -->
+        <!-- Los mensajes se agregarán aquí dinámicamente -->
       </div>
 
       <form id="form-chat" class="formulario-chat">
         <input type="text" id="mensaje-input" placeholder="Escribe tu mensaje..." autocomplete="off" required />
-        <label for="input-archivo" class="btn-adjuntar" title="Adjuntar archivo" style="cursor:pointer; font-size: 1.3em; color: #b6b3b3;">
-          <i class="fa fa-paperclip"></i>
+
+        <label for="input-archivo" class="btn-adjuntar" title="Adjuntar archivo">
+          <i class="fa fa-paperclip" style="cursor:pointer; font-size: 1.3em; color: #b6b3b3;"></i>
         </label>
-        
-        <input type="file" id="input-archivo" style="display:none" />
-        <button type="submit" class="boton-enviar-especial">Enviar</button>
+        <input type="file" id="input-archivo" />
+
+        <!-- Botón de enviar con icono redondo tipo WhatsApp -->
+        <button type="submit" class="boton-enviar-especial" aria-label="Enviar mensaje"></button>
       </form>
     </section>
   </main>
@@ -63,3 +64,4 @@
   <script type="module" src="./js/enlaceAdmin.js"></script>
 </body>
 </html>
+
